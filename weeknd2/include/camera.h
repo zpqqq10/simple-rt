@@ -18,9 +18,6 @@ class Camera {
   floating pixel_sample_scale;
   floating vfov = 20; // Vertical view angle (field of view)
 
-  // vec3 lookfrom = vec3(0, 0, 0); // Point camera is looking from
-  // vec3 lookat = vec3(0, 0, -1);  // Point camera is looking at
-  // vec3 vup = vec3(0, 1, 0);      // Camera-relative "up"
   // direction
   vec3 lookfrom = vec3(13, 2, 3); // Point camera is looking from
   vec3 lookat = vec3(0, 0, 0);    // Point camera is looking at
@@ -129,8 +126,9 @@ class Camera {
     // a randomly sampled point around the pixel location i, j.
     auto ray_origin = (defocus_angle <= 0) ? center : defocus_disk_sample();
     auto ray_direction = pixel_sample - ray_origin;
+    auto ray_time = random_double();
 
-    return Ray(ray_origin, ray_direction);
+    return Ray(ray_origin, ray_direction, ray_time);
   }
 
   vec2 sample_square() const {
@@ -151,9 +149,7 @@ public:
   void render(const Hittable &objects) {
     std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
     for (int j = 0; j < image_height; ++j) {
-      if (j % 200 == 0) {
-        std::clog << "finish " << j << " lines\r" << std::flush;
-      }
+      std::clog << "finish " << j << " lines\r" << std::flush;
       for (int i = 0; i < image_width; ++i) {
         color final_color(0., 0., 0.);
 
