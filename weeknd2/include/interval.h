@@ -30,6 +30,17 @@ public:
     return Interval(min - padding, max + padding);
   }
 
+  // for symmetry
+  // in fact friend here is to avoid defining this function in cpp
+  friend Interval operator+(const Interval &ival, double displacement) {
+    return Interval(ival.min + displacement, ival.max + displacement);
+  }
+
+  // ensure symmetry
+  friend Interval operator+(double displacement, const Interval &ival) {
+    return ival + displacement;
+  }
+
   // singleton
   static Interval get_empty() {
     static Interval empty = Interval(+infinity, -infinity);

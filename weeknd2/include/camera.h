@@ -33,6 +33,8 @@ class Camera {
   vec3 defocus_disk_u; // Defocus disk horizontal radius
   vec3 defocus_disk_v; // Defocus disk vertical radius
 
+  color background; // Scene background color
+
   void initialize() {
     // Camera
     auto focal_length = (lookfrom - lookat).length();
@@ -94,23 +96,22 @@ class Camera {
     if (objects.hit(r, Interval::get_positive(), rec)) {
       Ray scattered;
       color attenuation;
+      color emitted_color = rec.mat->emitted(rec.u, rec.v, rec.p);
       if (rec.mat->scatter(r, rec, attenuation, scattered)) {
-        return attenuation * ray_color(scattered, depth - 1, objects);
+        return attenuation * ray_color(scattered, depth - 1, objects) +
+               emitted_color;
       }
-      // ? hit nothing, in fact it would be better to set background color here?
-      return color(0., 0., 0.);
+      return emitted_color;
       // sample diffuse direction w/o materials, change sample distribution
       // instead of vec3 diffuse_direction =
-      // random_hemisphere(rec.get_normal()); vec3 diffuse_direction =
-      // rec.get_normal() + random_unit_dvec3(); return 0.5 *
-      //        ray_color(Ray(rec.get_p(), diffuse_direction), depth - 1,
+      // random_hemisphere(rec.normal); vec3 diffuse_direction =
+      // rec.normal + random_unit_dvec3(); return 0.5 *
+      //        ray_color(Ray(rec.p, diffuse_direction), depth - 1,
       //        objects);
     }
 
     // background color
-    auto weight = 0.5 * (r.normalizedDirection().y + 1.);
-    return floating(1. - weight) * color(1., 1., 1.) +
-           floating(weight) * color(.5, .7, 1.);
+    return background;
   }
 
   Ray get_ray(int i, int j) const {
@@ -145,6 +146,18 @@ class Camera {
 
 public:
   Camera() { initialize(); }
+  Camera(const int _width, const int _height, const int _samples_per_pixel = 32,
+         const int _max_depth = 48, const floating _vfov = 20,
+         const vec3 &_lookfrom = vec3(13, 2, 3),
+         const vec3 &_lookat = vec3(0, 0, 0), const vec3 &_vup = vec3(0, 1, 0),
+         const floating _defocus_angle = 0.6, const floating _focus_dist = 10,
+         const vec3 &bg = color(0.70, 0.80, 1.00))
+      : image_width(_width), image_height(_height),
+        samples_per_pixel(_samples_per_pixel), max_depth(_max_depth),
+        vfov(_vfov), lookfrom(_lookfrom), lookat(_lookat), vup(_vup),
+        defocus_angle(_defocus_angle), focus_dist(_focus_dist), background(bg) {
+    initialize();
+  }
 
   void render(const Hittable &objects) {
     std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";

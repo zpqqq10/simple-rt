@@ -3,13 +3,28 @@
 #include "ray.h"
 
 class AABB {
+  void pad2minimums() {
+    // Adjust the AABB so that no side is narrower than some delta, padding if
+    // necessary.
+
+    const double delta = 0.0001;
+    if (x.size() < delta)
+      x = x.expand(delta);
+    if (y.size() < delta)
+      y = y.expand(delta);
+    if (z.size() < delta)
+      z = z.expand(delta);
+  }
+
 public:
   Interval x, y, z;
 
   AABB() {} // The default AABB is empty, since intervals are empty by default.
 
   AABB(const Interval &x, const Interval &y, const Interval &z)
-      : x(x), y(y), z(z) {}
+      : x(x), y(y), z(z) {
+    pad2minimums();
+  }
 
   AABB(const vec3 &a, const vec3 &b) {
     // Treat the two points a and b as extrema for the bounding box, so we don't
@@ -69,6 +84,12 @@ public:
     else
       return y.size() > z.size() ? 1 : 2;
   }
+
+  friend AABB operator+(const AABB &bbox, const vec3 &offset) {
+    return AABB(bbox.x + offset.x, bbox.y + offset.y, bbox.z + offset.z);
+  }
+
+  friend AABB operator+(const vec3 &offset, const AABB &bbox) { return bbox + offset; }
 
   // singleton
   static AABB get_empty() {

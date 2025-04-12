@@ -4,6 +4,22 @@
 #include "hittable.h"
 #include <glm/glm.hpp>
 
+// directly modify u & v instead of returning a vector
+inline void get_sphere_uv(const vec3 &dir, double &u, double &v) {
+  // p: a given point on the sphere of radius one, centered at the origin.
+  // u: returned value [0,1] of angle around the Y axis from X=-1.
+  // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+  //     <1 0 0> yields <0.50 0.50>       <-1  0  0> yields <0.00 0.50>
+  //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
+  //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
+
+  auto theta = std::acos(-dir.y);
+  auto phi = std::atan2(-dir.z, dir.x) + PI;
+
+  u = phi / (2 * PI);
+  v = theta / PI;
+}
+
 class Sphere : public Hittable {
 public:
   // stationary sphere
@@ -54,8 +70,10 @@ public:
     }
 
     // set record
+    auto outnormal = glm::normalize(r.at(root) - center.at(r.time()));
     rec.set(r.at(root), root, mat);
-    rec.set_face_normal(r, glm::normalize(r.at(root) - center.at(r.time())));
+    rec.set_face_normal(r, outnormal);
+    get_sphere_uv(outnormal, rec.u, rec.v);
 
     return true;
   }
